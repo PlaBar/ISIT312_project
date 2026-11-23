@@ -1,0 +1,22 @@
+# Generated data: rebuilt by the generators and the pipeline, never committed
+staging/
+generators/labels/
+*.csv
+!preprocess/config/*.csv
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs, Spark and Hive leftovers
+*.log
+derby.log
+metastore_db/
+spark-warehouse/
+.joined_*.scala
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

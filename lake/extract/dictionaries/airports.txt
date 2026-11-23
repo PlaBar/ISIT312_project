@@ -1,0 +1,48 @@
+# airports.txt - place names in customer messages, for lake/extract/Rules.scala
+#
+# Format: term|IATA code|flag
+#   term   an IATA code or a place name, matched as a whole word, ignoring case
+#   flag   exact_case: for codes that are also English words ("please add insurance").
+#          They match as written here, or in any case only right next to a route marker:
+#          dwc/add, add-dwc, add > dubai, into add, from add, ex add
+# When terms overlap, the longest wins ("Dubai World Central" before "Dubai").
+# Assumption [A]: "Dubai" on its own means DWC, the GSS home base; DXB is only ever
+# written as DXB. Ambiguous for other carriers, safe for GSS's own traffic.
+
+DWC|DWC|
+Dubai World Central|DWC|
+Al Maktoum|DWC|
+Maktoum|DWC|
+Dubai|DWC|
+DXB|DXB|
+Dubai International|DXB|
+SHJ|SHJ|
+Sharjah|SHJ|
+NBO|NBO|
+Nairobi|NBO|
+ADD|ADD|exact_case
+Addis Ababa|ADD|
+Addis|ADD|
+EBB|EBB|
+Entebbe|EBB|
+Kampala|EBB|
+JUB|JUB|
+Juba|JUB|
+MGQ|MGQ|
+Mogadishu|MGQ|
+FIH|FIH|
+Kinshasa|FIH|
+LOS|LOS|
+Lagos|LOS|
+KBL|KBL|
+Kabul|KBL|
+BGW|BGW|
+Baghdad|BGW|
+EBL|EBL|
+Erbil|EBL|
+TAS|TAS|
+Tashkent|TAS|
+KHI|KHI|
+Karachi|KHI|
+DAC|DAC|
+Dhaka|DAC|

@@ -1,0 +1,70 @@
+# date_phrases.txt - words for the cargo ready date, for lake/extract/Rules.scala
+#
+# Format: section|phrase|value    (whole words, ignoring case)
+#
+# month     month names and abbreviations -> month number
+# weekday   day names -> ISO day number (Monday = 1)
+# relative  words resolved against the message's sent date (UAE time):
+#             SENT          the sent date            (ASAP, urgent)
+#             SENT+n        n days after it          (today = SENT+0, tomorrow = SENT+1)
+#             NEXT_MONDAY   Monday of the following week (next week)
+#             IGNORE        not a date, although it contains a date word ("AOG urgent")
+#           The longest phrase wins, so "aog urgent" is ignored but "urgent" alone is SENT.
+# context   a date right after these words is not the ready date ("as discussed on the
+#           phone 29/10" is the date of a call)
+#
+# Numeric and named dates are recognised by Rules.scala and resolved like this:
+#   12/03, 12 March, March 12   next date on or after the sent date with that day and month
+#   on the 12th                 that day in the sent month, or next month if already past
+#   Thursday                    next Thursday strictly after the sent date
+#   12/03/2024, 12.03.2024      that date
+# (the same rules as the truth file, generators/messages_gen.py)
+
+month|january|1
+month|jan|1
+month|february|2
+month|feb|2
+month|march|3
+month|mar|3
+month|april|4
+month|apr|4
+month|may|5
+month|june|6
+month|jun|6
+month|july|7
+month|jul|7
+month|august|8
+month|aug|8
+month|september|9
+month|sep|9
+month|sept|9
+month|october|10
+month|oct|10
+month|november|11
+month|nov|11
+month|december|12
+month|dec|12
+
+weekday|monday|1
+weekday|tuesday|2
+weekday|wednesday|3
+weekday|thursday|4
+weekday|friday|5
+weekday|saturday|6
+weekday|sunday|7
+
+relative|asap|SENT
+relative|as soon as possible|SENT
+relative|urgent|SENT
+relative|urgently|SENT
+relative|today|SENT+0
+relative|tomorrow|SENT+1
+relative|next week|NEXT_MONDAY
+relative|aog urgent|IGNORE
+
+context|discussed
+context|phone
+context|call
+context|spoke
+context|our ref
+context|invoice

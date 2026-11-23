@@ -1,0 +1,1 @@
+HBASE_ROW_KEY,r:request_key,r:thread_id,r:channel,r:sent_at,r:origin_iata,r:dest_iata,r:cargo_type,r:weight_kg,r:ready_date,r:special_handling,r:confidence,r:missing_fields,r:status,r:attachments,m:_src_file,m:_run_id,m:_batch_id

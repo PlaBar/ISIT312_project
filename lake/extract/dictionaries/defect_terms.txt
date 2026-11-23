@@ -1,0 +1,99 @@
+# defect_terms.txt - keyword rules for lake/process/DefectClassify.scala
+#
+# Format: section|term|value   (terms are matched as whole words, case is ignored)
+#
+# system     the EARLIEST system term in the note decides the system, because technicians
+#            start a defect note with the system ("hyd press low LH sys, topped up")
+# component  the LONGEST matching term decides the component (the most specific one).
+#            A term written SYSTEM:term only applies to notes of that system
+# default    component used when no component term matches: default|SYSTEM|component
+# severity   the HIGHEST severity among the matching terms (AOG > HIGH > MEDIUM > LOW);
+#            notes without a severity term get default_severity. Used where the maintenance
+#            system left the severity empty, and compared with it where it did not
+# All rules are project assumptions [A], written from common maintenance vocabulary.
+
+system|hyd|HYDRAULIC
+system|hydraulic|HYDRAULIC
+system|elec|ELECTRICAL
+system|electrical|ELECTRICAL
+system|gen|ELECTRICAL
+system|bus tie|ELECTRICAL
+system|eng|ENGINE
+system|engine|ENGINE
+system|egt|ENGINE
+system|apu|APU
+system|ldg gear|LANDING_GEAR
+system|landing gear|LANDING_GEAR
+system|nose gear|LANDING_GEAR
+system|mlg|LANDING_GEAR
+system|brake|LANDING_GEAR
+system|avionics|AVIONICS
+system|fmc|AVIONICS
+system|vhf|AVIONICS
+system|fuel|FUEL
+system|press|PRESSURISATION
+system|pressurisation|PRESSURISATION
+system|pack|PRESSURISATION
+system|cabin alt|PRESSURISATION
+system|flt ctrl|FLIGHT_CONTROLS
+system|flight control|FLIGHT_CONTROLS
+system|aileron|FLIGHT_CONTROLS
+system|spoiler|FLIGHT_CONTROLS
+system|elevator|FLIGHT_CONTROLS
+system|rudder|FLIGHT_CONTROLS
+
+component|mlg actuator|landing gear actuator
+component|gear actuator|landing gear actuator
+component|gen|generator
+component|generator|generator
+component|bus tie|bus tie
+component|oil|engine oil system
+component|egt|engine
+component|APU:start|apu starter
+component|APU:starter|apu starter
+component|APU:bleed valve|apu bleed valve
+component|nose gear|nose gear
+component|brake|brake
+component|fmc|fmc
+component|vhf|vhf radio
+component|qty ind|fuel quantity indicator
+component|FUEL:wing|wing tank
+component|cabin alt|outflow valve
+component|outflow valve|outflow valve
+component|pack|air conditioning pack
+component|aileron trim|aileron trim
+component|spoiler|spoiler
+
+default|HYDRAULIC|hydraulic system
+default|ELECTRICAL|electrical system
+default|ENGINE|engine
+default|APU|apu
+default|LANDING_GEAR|landing gear
+default|AVIONICS|avionics
+default|FUEL|fuel system
+default|PRESSURISATION|pressurisation system
+default|FLIGHT_CONTROLS|flight controls
+
+severity|aog|AOG
+severity|jam|AOG
+severity|fuel leak|AOG
+severity|grounded|AOG
+severity|unsafe|HIGH
+severity|exceedance|HIGH
+severity|warning|HIGH
+severity|trip in flt|HIGH
+severity|fire|HIGH
+severity|smoke|HIGH
+severity|leak|HIGH
+severity|low|MEDIUM
+severity|inop|MEDIUM
+severity|fails|MEDIUM
+severity|trip|MEDIUM
+severity|fault|MEDIUM
+severity|illum|MEDIUM
+severity|limit|MEDIUM
+severity|intermittent|LOW
+severity|faulty|LOW
+severity|map shift|LOW
+severity|cosmetic|LOW
+default_severity|MEDIUM

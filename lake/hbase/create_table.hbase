@@ -1,0 +1,13 @@
+# create_table.hbase - (re)create the HBase table for customer requests.
+#   hbase shell lake/hbase/create_table.hbase
+# Run by lake/hbase/load_hbase.sh. The HBase shell is JRuby, so plain Ruby works here.
+# The table is rebuilt on every load: its content always comes from /lake/curated/request.
+
+t = 'gss_requests'
+if list.include?(t)
+  disable t
+  drop t
+end
+create t, {NAME => 'r', VERSIONS => 1}, {NAME => 'm', VERSIONS => 1}
+describe t
+exit

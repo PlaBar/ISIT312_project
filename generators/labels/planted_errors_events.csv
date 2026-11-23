@@ -1,0 +1,13 @@
+table,file,key,error
+events,events_202312.jsonl,E-000022,missing_flight_no
+events,events_202402.jsonl,E-000053,duplicate_line
+events,events_202406.jsonl,E-000098,duplicate_line
+events,events_202406.jsonl,E-000108,bad_timestamp
+events,events_202407.jsonl,E-000122,unknown_event_type
+events,events_202408.jsonl,E-000129,duplicate_line
+events,events_202412.jsonl,E-000168,unknown_event_type
+events,events_202501.jsonl,E-000181,unknown_event_type
+events,events_202502.jsonl,E-000194,truncated_json
+events,events_202505.jsonl,E-000222,unknown_event_type
+events,events_202508.jsonl,E-000277,truncated_json
+events,events_202607.jsonl,E-000417,bad_timestamp

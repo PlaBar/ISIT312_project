@@ -1,0 +1,33 @@
+# crontab.txt - the schedule of the GSS data lake (Step 28).
+#
+# Install (this replaces your crontab, so the old one is saved first):
+#   crontab -l > ~/crontab_backup.txt 2>/dev/null
+#   crontab ~/gss-datalake/lake/ops/crontab.txt
+#   crontab -l
+# Remove again:  crontab -r
+#
+# Times are the VM's own clock and time zone (date shows which). Cron starts jobs with an
+# almost empty environment; every script sources preprocess/env.sh, which sets PATH,
+# JAVA_HOME, HADOOP_HOME, SPARK_HOME, HIVE_HOME, HBASE_HOME and GSS_STAGING itself.
+# All output goes to $HOME/gss-data/staging/reports/cron.log; each script also keeps its own log.
+#
+# What runs when
+#   at boot          HDFS and the Hive metastore (after the shared folder is mounted)
+#   every 15 min     messages: release the next batch and stream it in (Spark Trigger.Once)
+#   every hour       health check: services, HDFS, age and result of the last runs
+#   01:30 daily      nightly batch: preprocess, raw, processed, curated, defects, documents, HBase
+#   03:00 Sunday     compaction of the stream's small files, log rotation
+#   06:00 on the 1st monthly management report for the month just ended (Hive)
+#
+# Order matters at night: the batch starts at 01:30 and takes about 10 minutes; the stream
+# runs in between are made to wait (run_spark.sh lets one Spark job run at a time).
+
+SHELL=/bin/bash
+MAILTO=""
+
+@reboot       sleep 60; bash $HOME/gss-datalake/lake/ops/start_services.sh >> $HOME/gss-data/staging/reports/cron.log 2>&1
+*/15 * * * *  bash $HOME/gss-datalake/lake/ops/run_pipeline.sh stream >> $HOME/gss-data/staging/reports/cron.log 2>&1
+5 * * * *     bash $HOME/gss-datalake/lake/ops/health_check.sh >> $HOME/gss-data/staging/reports/cron.log 2>&1
+30 1 * * *    bash $HOME/gss-datalake/lake/ops/run_pipeline.sh nightly >> $HOME/gss-data/staging/reports/cron.log 2>&1
+0 3 * * 0     bash $HOME/gss-datalake/lake/ops/run_pipeline.sh weekly >> $HOME/gss-data/staging/reports/cron.log 2>&1
+0 6 1 * *     bash $HOME/gss-datalake/lake/hive/run_monthly_report.sh >> $HOME/gss-data/staging/reports/cron.log 2>&1

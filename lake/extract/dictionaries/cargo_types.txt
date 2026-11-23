@@ -1,0 +1,130 @@
+# cargo_types.txt - request vocabulary for lake/extract/Rules.scala
+#
+# Format: section|phrase|value      (phrases match as whole words, ignoring case)
+#
+# cargo    phrase -> cargo type. The longest matching phrase wins. Typos are tolerated: one
+#          word of 5+ letters may have one typo (a letter dropped, added, changed, or two
+#          neighbouring letters swapped: "crago", "vacines"), and a phrase may be written
+#          without its spaces ("generalcargo") or with a typo across a space ("foo daid",
+#          "fresh ifsh", "food iad") if it has 7+ letters and no word under 3. Short words ("dg", "kg")
+#          must otherwise match exactly, so "kg cargo" is never read as "dg cargo"
+# cargo_fallback  used only when no cargo phrase matched ("cargo" alone means general cargo,
+#          but "gold, valuable cargo" is valuables)
+# shc      phrase -> IATA special handling code. Longest phrase wins ("cold chain 2-8" is
+#          PIL, "cold chain" alone is PER)
+# unit     weight unit -> kilograms per unit ("2.5T" = 2500 kg)
+# not_weight  a number followed by these words is not the shipment weight
+#          ("one piece over 3T", "12 pallets", "dims 120x80")
+# request  words that mark a message as a cargo request (Rules.scala also needs a route,
+#          a cargo type or a weight before it counts a message as a request)
+# All entries are project assumptions [A].
+
+cargo|general cargo|GENERAL
+cargo|gen cargo|GENERAL
+cargo|consolidated cargo|GENERAL
+cargo|consol|GENERAL
+cargo|general goods|GENERAL
+cargo|mixed cargo|GENERAL
+cargo_fallback|cargo|GENERAL
+cargo|perishables|PERISHABLE
+cargo|perishibles|PERISHABLE
+cargo|perishable|PERISHABLE
+cargo|fresh fruit|PERISHABLE
+cargo|fresh flowers|PERISHABLE
+cargo|flowers|PERISHABLE
+cargo|fresh fish|PERISHABLE
+cargo|fish|PERISHABLE
+cargo|vegetables|PERISHABLE
+cargo|pharma|PHARMA
+cargo|pharmaceuticals|PHARMA
+cargo|vaccines|PHARMA
+cargo|medicines|PHARMA
+cargo|medical supplies|PHARMA
+cargo|dg cargo|DANGEROUS_GOODS
+cargo|dangerous goods|DANGEROUS_GOODS
+cargo|lithium batteries|DANGEROUS_GOODS
+cargo|hazmat|DANGEROUS_GOODS
+cargo|paint|DANGEROUS_GOODS
+cargo|relief goods|HUMANITARIAN
+cargo|humanitarian aid|HUMANITARIAN
+cargo|humanitarian|HUMANITARIAN
+cargo|tents and blankets|HUMANITARIAN
+cargo|tents|HUMANITARIAN
+cargo|food aid|HUMANITARIAN
+cargo|relief cargo|HUMANITARIAN
+cargo|aog spares|AOG_SPARES
+cargo|aircraft parts|AOG_SPARES
+cargo|aircraft spares|AOG_SPARES
+cargo|spare engine|AOG_SPARES
+cargo|landing gear parts|AOG_SPARES
+cargo|drilling equipment|OIL_GAS_EQUIPMENT
+cargo|oilfield equipment|OIL_GAS_EQUIPMENT
+cargo|drill pipes|OIL_GAS_EQUIPMENT
+cargo|oil and gas equipment|OIL_GAS_EQUIPMENT
+cargo|vehicles|VEHICLES
+cargo|land cruisers|VEHICLES
+cargo|armoured cars|VEHICLES
+cargo|trucks|VEHICLES
+cargo|pickup trucks|VEHICLES
+cargo|valuables|VALUABLES
+cargo|gold|VALUABLES
+cargo|banknotes|VALUABLES
+cargo|cash in transit|VALUABLES
+cargo|jewellery|VALUABLES
+
+shc|keep cool|PER
+shc|cold chain|PER
+shc|keep chilled|PER
+shc|temp controlled|PIL
+shc|2-8c|PIL
+shc|2-8 degrees|PIL
+shc|cold chain 2-8|PIL
+shc|dg class|DGR
+shc|msds|DGR
+shc|dangerous goods declaration|DGR
+shc|dgr shipment|DGR
+shc|aog urgent|AOG
+shc|aircraft on ground|AOG
+shc|aog situation|AOG
+shc|heavy lift|HEA
+shc|heavy piece|HEA
+shc|heavy cargo|HEA
+shc|main deck|HEA
+shc|high value|VAL
+shc|escort required|VAL
+shc|valuable cargo|VAL
+shc|secure handling|VAL
+shc|val shipment|VAL
+
+unit|kg|1
+unit|kgs|1
+unit|kilo|1
+unit|kilos|1
+unit|kilograms|1
+unit|t|1000
+unit|ton|1000
+unit|tons|1000
+unit|tonne|1000
+unit|tonnes|1000
+unit|mt|1000
+
+not_weight|pallets
+not_weight|pallet
+not_weight|pcs
+not_weight|pieces
+not_weight|piece over
+not_weight|over
+not_weight|x
+
+request|quote
+request|rate
+request|rates
+request|rfq
+request|charter
+request|need
+request|request
+request|looking for
+request|we have
+request|can you
+request|kindly
+request|pls quote

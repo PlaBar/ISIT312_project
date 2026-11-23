@@ -1,0 +1,9 @@
+# Every text file keeps LF line endings, in the repository and in the working folder, on every
+# computer. The VM runs these files: a CRLF in a .sh, .py, .scala or .hql file breaks it.
+* text=auto eol=lf
+
+# Never touched
+*.png binary
+*.jpg binary
+*.pdf binary
+*.zip binary

@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "description": "Preprocessing contract for GSS synthetic data. Mirrors docs/data_dictionary.md.",
+  "null_tokens": ["N/A", "NA", "NULL", "null", "-"],
+  "pattern_action": "flag",
+
+  "types": {
+    "str":      {"kind": "string"},
+    "int":      {"kind": "integer"},
+    "dec2":     {"kind": "decimal", "places": 2},
+    "date_dmy": {"kind": "date", "input_formats": ["%d/%m/%Y"], "output_format": "%Y-%m-%d"},
+    "date_iso": {"kind": "date", "input_formats": ["%Y-%m-%d"], "output_format": "%Y-%m-%d"},
+    "date_mon": {"kind": "date", "input_formats": ["%d-%b-%Y"], "output_format": "%Y-%m-%d"},
+    "ts_lion":  {"kind": "timestamp", "input_formats": ["%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S"], "output_format": "%Y-%m-%dT%H:%M:%S"}
+  },
+
+  "structured": {
+    "netsuite.customer": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["customer.csv", "customer_[0-9]*.csv"],
+      "primary_key": ["customer_id"],
+      "columns": [
+        {"name": "customer_id",   "type": "str", "required": true, "pattern": "^CUS-\\d{4}$"},
+        {"name": "name",          "type": "str", "required": true},
+        {"name": "country",       "type": "str", "required": true},
+        {"name": "payment_terms", "type": "str", "required": true, "allowed": ["NET15", "NET30", "NET45", "PREPAID"]}
+      ],
+      "row_rules": []
+    },
+    "netsuite.supplier": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["supplier.csv", "supplier_[0-9]*.csv"],
+      "primary_key": ["supplier_id"],
+      "columns": [
+        {"name": "supplier_id", "type": "str", "required": true, "pattern": "^SUP-\\d{3}$"},
+        {"name": "name",        "type": "str", "required": true},
+        {"name": "category",    "type": "str", "required": true, "allowed": ["FUEL", "GROUND_HANDLING", "NAVIGATION", "AIRPORT_CHARGES", "CATERING", "MAINTENANCE", "CREW_HOTEL", "INSURANCE"]},
+        {"name": "country",     "type": "str", "required": true}
+      ],
+      "row_rules": []
+    },
+    "netsuite.invoice": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["invoice.csv", "invoice_[0-9]*.csv"],
+      "primary_key": ["invoice_id"],
+      "columns": [
+        {"name": "invoice_id",   "type": "str",      "required": true, "pattern": "^INV-\\d{6}$"},
+        {"name": "customer_id",  "type": "str",      "required": true, "pattern": "^CUS-\\d{4}$"},
+        {"name": "invoice_date", "type": "date_dmy", "required": true},
+        {"name": "due_date",     "type": "date_dmy", "required": true},
+        {"name": "currency",     "type": "str",      "required": true, "allowed": ["USD", "AED"]},
+        {"name": "total",        "type": "dec2",     "required": true, "positive": true},
+        {"name": "status",       "type": "str",      "required": true, "allowed": ["OPEN", "PARTIAL", "PAID", "VOID"]},
+        {"name": "memo",         "type": "str",      "required": false, "free_text": true}
+      ],
+      "row_rules": [
+        {"rule_id": "PP-05", "check": "date_not_before", "column": "due_date", "other": "invoice_date", "reason": "due_date before invoice_date"}
+      ]
+    },
+    "netsuite.invoice_line": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["invoice_line.csv", "invoice_line_[0-9]*.csv"],
+      "primary_key": ["line_id"],
+      "columns": [
+        {"name": "line_id",     "type": "str",  "required": true, "pattern": "^IL-\\d{7}$"},
+        {"name": "invoice_id",  "type": "str",  "required": true, "pattern": "^INV-\\d{6}$"},
+        {"name": "description", "type": "str",  "required": true},
+        {"name": "qty",         "type": "dec2", "required": true, "positive": true},
+        {"name": "unit_price",  "type": "dec2", "required": true, "positive": true},
+        {"name": "amount",      "type": "dec2", "required": true, "positive": true}
+      ],
+      "row_rules": []
+    },
+    "netsuite.payment": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["payment.csv", "payment_[0-9]*.csv"],
+      "primary_key": ["payment_id"],
+      "columns": [
+        {"name": "payment_id", "type": "str",      "required": true, "pattern": "^PAY-\\d{6}$"},
+        {"name": "invoice_id", "type": "str",      "required": true, "pattern": "^INV-\\d{6}$"},
+        {"name": "paid_date",  "type": "date_dmy", "required": true},
+        {"name": "amount",     "type": "dec2",     "required": true, "positive": true},
+        {"name": "method",     "type": "str",      "required": true, "allowed": ["BANK_TRANSFER", "CHEQUE", "CARD"]}
+      ],
+      "row_rules": []
+    },
+    "netsuite.purchase_order": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["purchase_order.csv", "purchase_order_[0-9]*.csv"],
+      "primary_key": ["po_id"],
+      "columns": [
+        {"name": "po_id",       "type": "str",      "required": true, "pattern": "^PO-\\d{6}$"},
+        {"name": "supplier_id", "type": "str",      "required": true, "pattern": "^SUP-\\d{3}$"},
+        {"name": "po_date",     "type": "date_dmy", "required": true},
+        {"name": "status",      "type": "str",      "required": true, "allowed": ["OPEN", "RECEIVED", "CLOSED", "CANCELLED"]},
+        {"name": "total",       "type": "dec2",     "required": true, "positive": true}
+      ],
+      "row_rules": []
+    },
+    "netsuite.po_line": {
+      "staging_dir": "staging/exports/netsuite",
+      "file_patterns": ["po_line.csv", "po_line_[0-9]*.csv"],
+      "primary_key": ["po_line_id"],
+      "columns": [
+        {"name": "po_line_id", "type": "str",  "required": true, "pattern": "^POL-\\d{7}$"},
+        {"name": "po_id",      "type": "str",  "required": true, "pattern": "^PO-\\d{6}$"},
+        {"name": "item_desc",  "type": "str",  "required": true, "free_text": true},
+        {"name": "qty",        "type": "dec2", "required": true, "positive": true},
+        {"name": "unit_cost",  "type": "dec2", "required": true, "positive": true},
+        {"name": "amount",     "type": "dec2", "required": true, "positive": true}
+      ],
+      "row_rules": []
+    },
+
+    "lion.airport": {
+"staging_dir": "staging/exports/lion",
+      "file_patterns": ["airport.csv", "airport_[0-9]*.csv"],
+      "primary_key": ["icao_code"],
+      "columns": [
+        {"name": "icao_code", "type": "str", "required": true, "standardise": "upper", "pattern": "^[A-Z]{4}$"},
+        {"name": "iata_code", "type": "str", "required": true, "standardise": "upper", "pattern": "^[A-Z]{3}$"},
+        {"name": "name",      "type": "str", "required": true},
+        {"name": "country",   "type": "str", "required": true}
+      ],
+      "row_rules": []
+    },
+    "lion.aircraft": {
+      "staging_dir": "staging/exports/lion",
+      "file_patterns": ["aircraft.csv", "aircraft_[0-9]*.csv"],
+      "primary_key": ["aircraft_id"],
+      "columns": [
+        {"name": "aircraft_id",    "type": "str", "required": true, "pattern": "^AC\\d{2}$"},
+        {"name": "registration",   "type": "str", "required": true, "standardise": "registration", "pattern": "^A6-[A-Z]{3}$"},
+        {"name": "type",           "type": "str", "required": true},
+       {"name": "max_payload_kg", "type": "int", "required": true, "positive": true}
+      ],
+      "row_rules": []
+    },
+    "lion.flight": {
+      "staging_dir": "staging/exports/lion",
+      "file_patterns": ["flight.csv", "flight_[0-9]*.csv"],
+      "primary_key": ["flight_no"],
+      "columns": [
+        {"name": "flight_no",   "type": "str",     "required": true, "standardise": "upper", "pattern": "^GS\\d{4}$"},
+        {"name": "aircraft_id", "type": "str",     "required": true, "pattern": "^AC\\d{2}$"},
+        {"name": "origin_icao", "type": "str",     "required": true, "standardise": "upper", "pattern": "^[A-Z]{4}$"},
+        {"name": "dest_icao",   "type": "str",     "required": true, "standardise": "upper", "pattern": "^[A-Z]{4}$"},
+        {"name": "sched_dep",   "type": "ts_lion", "required": true},
+        {"name": "sched_arr",   "type": "ts_lion", "required": true},
+        {"name": "actual_dep",  "type": "ts_lion", "required": false},
+        {"name": "actual_arr",  "type": "ts_lion", "required": false},
+        {"name": "status",      "type": "str",     "required": true, "allowed": ["SCHEDULED", "DEPARTED", "ARRIVED", "CANCELLED", "DIVERTED"]}
+      ],
+      "row_rules": [
+        {"rule_id": "PP-05", "check": "date_not_before", "column": "sched_arr", "other": "sched_dep", "reason": "sched_arr before sched_dep"}
+      ]
+    },
+    "lion.manifest": {
+      "staging_dir": "staging/exports/lion",
+      "file_patterns": ["manifest.csv", "manifest_[0-9]*.csv"],
+      "primary_key": ["manifest_id"],
+      "columns": [
+        {"name": "manifest_id", "type": "str",  "required": true, "pattern": "^MF-\\d{6}$"},
+        {"name": "flight_no",   "type": "str",  "required": true, "standardise": "upper", "pattern": "^GS\\d{4}$"},
+        {"name": "cargo_desc",  "type": "str",  "required": true, "free_text": true},
+        {"name": "weight_kg",   "type": "dec2", "required": true, "positive": true},
+        {"name": "volume_m3",   "type": "dec2", "required": true, "positive": true},
+        {"name": "consignee",   "type": "str",  "required": true},
+        {"name": "awb_no",      "type": "str",  "required": false, "pattern": "^176-\\d{8}$"}
+      ],
+      "row_rules": []
+    },
+
+    "maint.aircraft_ref": {
+      "staging_dir": "staging/exports/maint",
+      "file_patterns": ["aircraft_ref.csv", "aircraft_ref_[0-9]*.csv"],
+      "primary_key": ["registration"],
+      "columns": [
+        {"name": "registration", "type": "str", "required": true, "standardise": "registration", "pattern": "^A6-[A-Z]{3}$"},
+        {"name": "type",         "type": "str", "required": true}
+      ],
+      "row_rules": []
+    },
+    "maint.maintenance_event": {
+      "staging_dir": "staging/exports/maint",
+      "file_patterns": ["maintenance_event.csv", "maintenance_event_[0-9]*.csv"],
+      "primary_key": ["event_id"],
+      "columns": [
+        {"name": "event_id",        "type": "str",      "required": true, "pattern": "^ME-\\d{5}$"},
+        {"name": "registration",    "type": "str",      "required": true, "standardise": "registration", "pattern": "^A6-[A-Z]{3}$"},
+        {"name": "event_type",      "type": "str",      "required": true, "allowed": ["A_CHECK", "C_CHECK", "LINE_CHECK", "ENGINE_INSPECTION", "COMPONENT_CHANGE"]},
+        {"name": "due_date",        "type": "date_mon", "required": true},
+        {"name": "done_date",       "type": "date_mon", "required": false},
+        {"name": "flight_hours_at", "type": "dec2",     "required": true, "positive": true},
+        {"name": "cycles_at",       "type": "int",      "required": true, "positive": true},
+        {"name": "status",          "type": "str",      "required": true, "allowed": ["PLANNED", "DONE", "OVERDUE"]}
+      ],
+      "row_rules": []
+    },
+    "maint.defect": {
+      "staging_dir": "staging/exports/maint",
+      "file_patterns": ["defect.csv", "defect_[0-9]*.csv"],
+      "primary_key": ["defect_id"],
+      "columns": [
+        {"name": "defect_id",     "type": "str",      "required": true, "pattern": "^DEF-\\d{5}$"},
+        {"name": "registration",  "type": "str",      "required": true, "standardise": "registration", "pattern": "^A6-[A-Z]{3}$"},
+        {"name": "reported_date", "type": "date_mon", "required": true},
+        {"name": "description",   "type": "str",      "required": true, "free_text": true},
+        {"name": "severity",      "type": "str",      "required": false, "allowed": ["LOW", "MEDIUM", "HIGH", "AOG"]},
+        {"name": "resolved",      "type": "str",      "required": true, "allowed": ["Y", "N"]}
+      ],
+      "row_rules": []
+    }
+  },
+
+  "messages": {
+    "staging_dirs": {"email": "staging/messages/email", "whatsapp": "staging/messages/whatsapp"},
+    "file_pattern": "*.json",
+    "required_fields": ["msg_id", "channel", "sent_at", "body"],
+    "allowed_channels": ["email", "whatsapp"],
+    "dedupe_key": "msg_id",
+    "msg_id_pattern": "^M-\\d{4}-\\d{6}$",
+    "timestamp_input_formats": ["%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S"],
+    "timestamp_note": "Python 3.4 %z only accepts +0400, so remove the colon from the offset before parsing",
+    "default_utc_offset": "+04:00",
+    "timestamp_output_format": "%Y-%m-%dT%H:%M:%SZ",
+    "sender_rules": {"email": "lowercase", "whatsapp": "phone_plus971"},
+    "free_text_fields": ["body", "subject"]
+  },
+
+  "events": {
+    "staging_dir": "staging/events",
+    "file_pattern": "events_*.jsonl",
+    "required_fields": ["event_id", "flight_no", "event_type", "event_time"],
+    "allowed_event_types": ["DELAY", "AIRCRAFT_SWAP", "DIVERSION", "CANCELLATION", "AOG"],
+    "dedupe_key": "event_id",
+    "timestamp_input_formats": ["%Y-%m-%dT%H:%M:%S"],
+    "timestamp_output_format": "%Y-%m-%dT%H:%M:%S",
+    "free_text_fields": ["detail"]
+  },
+
+  "documents": {
+    "staging_dir": "staging/documents",
+    "file_pattern": "*.txt",
+    "doc_types": {
+      "QUOTATION": "QUOTE",
+      "AIR WAYBILL": "AWB",
+      "PACKING LIST": "PACKING",
+      "CLEARANCE PERMIT": "PERMIT"
+    },
+    "min_chars": 60,
+    "dedupe_key": "content_sha256"
+  },
+
+  "lineage_fields": ["_src_file", "_run_id"],
+  "run_id_format": "RUN-%Y%m%d-%H%M%S"
+}
