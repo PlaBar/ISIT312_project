@@ -48,6 +48,7 @@ The curated star schema:
 - **Dimensions:** `dim_date`, `dim_customer`, `dim_supplier`, `dim_airport`, `dim_aircraft`.
 - **Facts:** `fact_invoice`, `fact_cost`, `fact_flight`, `fact_maintenance`, `fact_event`, `fact_defect`.
 - **Business tables:** `flight_key_map`, `request`, `document_link`, `flight_documents`.
+- **Analysis tables (section 6):** `customer_segment`, `request_response`, `delay_cause`.
 
 Every row keeps its lineage (`_src_file`, `_run_id`), back to the file and the preprocessing run
 it came from.
@@ -94,6 +95,8 @@ lake/
   hbase/HBaseSink.scala  create_table.hbase  load_hbase.sh
   ops/run_pipeline.sh  start_services.sh  health_check.sh  CompactStream.scala  crontab.txt
   bench/run_benchmarks.sh  BenchPrepare.scala  BenchSpark.scala  mapper.py  reducer.py
+  jobs/CustomerSegments.scala  ResponseTimes.scala  DelayCauses.scala     analysis jobs (Spark)
+  jobs/route_economics.hql  fleet_maintenance.hql                         analysis reports (Hive)
 evaluation/
   check_preprocessing.py  check_dictionaries.py  rules_twin.py  link_twin.py
   repair_twin_reference.py  Accuracy.scala
@@ -145,13 +148,39 @@ bash lake/hive/run_monthly_report.sh 202610
 # 6. evaluation
 bash lake/run_spark.sh evaluation/Accuracy.scala
 start-yarn.sh && bash lake/bench/run_benchmarks.sh && stop-yarn.sh
+# 7. analysis jobs (section 6)
+bash lake/run_spark.sh lake/jobs/CustomerSegments.scala
+bash lake/run_spark.sh lake/jobs/ResponseTimes.scala
+bash lake/run_spark.sh lake/jobs/DelayCauses.scala
+bash lake/run_spark.sh lake/hive/HiveDdl.scala && hive -f lake/hive/create_tables.hql   # new tables into Hive
+hive -f lake/jobs/route_economics.hql   | tee $GSS_STAGING/reports/route_economics.txt
+hive -f lake/jobs/fleet_maintenance.hql | tee $GSS_STAGING/reports/fleet_maintenance.txt
 ```
 
 After that, `crontab lake/ops/crontab.txt` keeps the lake running on its own. It runs
 `run_pipeline.sh stream` every 15 minutes, `nightly` at 01:30, `weekly` on Sunday at 03:00
 and the monthly report on the 1st. `bash lake/ops/health_check.sh` shows the state in one line.
 
-## 6. How correctness is checked
+## 6. Analysis jobs
+
+Five jobs in `lake/jobs/` use the finished lake to answer business questions. They only read
+the curated and processed zones and add to them, so they can be run or rerun at any time.
+
+| Job | Question | Engine | Output |
+|---|---|---|---|
+| `CustomerSegments.scala` | Which customers matter most, and which pay late or owe money? | Spark | `curated/customer_segment`: value tier (A, B, C, DORMANT), payment class (RELIABLE, SLOW, RISKY), recommended action |
+| `ResponseTimes.scala` | How fast does the charter desk answer requests? | Spark | `curated/request_response`: minutes to the first reply, within a 2-hour target or not (`GSS_SLA_MINUTES` to change) |
+| `DelayCauses.scala` | Why are flights late or cancelled, and who controls the cause? | Spark | `curated/delay_cause`: each event's cause group and who controls it (GSS, suppliers, customer, external) |
+| `route_economics.hql` | Which routes earn most per block hour; where is demand not flown? | Hive | printed report: route margin per block hour, demand against supply, cancellations |
+| `fleet_maintenance.hql` | How hard is each aircraft worked; is maintenance on time? | Hive | printed report: utilisation, defects per 100 block hours, late and open checks |
+
+Run the Spark jobs with `bash lake/run_spark.sh lake/jobs/<Job>.scala`, about a minute each.
+Run the Hive reports with `hive -f lake/jobs/<report>.hql`, a few minutes each. After the first
+Spark run, `HiveDdl.scala` and `create_tables.hql` make the three new tables queryable in
+Hive. The *GSS Data Lake: Analysis Jobs Guide* describes each job's rules, columns,
+demonstration and tests.
+
+## 7. How correctness is checked
 
 | Layer | Check | Result on this data |
 |---|---|---|
@@ -169,7 +198,7 @@ Python twins (`evaluation/*_twin.py`) hold the same rules as the Scala jobs and 
 against the truth before the Scala was written. That was needed because Scala could not be
 tested outside the VM. Their expected scores are in the process catalogue.
 
-## 7. Known limitations
+## 8. Known limitations
 
 - **Synthetic data:** the extraction rules were written knowing the generator's vocabulary, so
   their near-perfect scores are an upper bound. Real messages and notes would score lower.
@@ -187,5 +216,5 @@ tested outside the VM. Their expected scores are in the process catalogue.
   direct costs that can be tied to a flight (fuel, handling, navigation). About 93% of revenue
   and 87% of cost could be tied to a flight.
 
-See `assumptions_register.md` for every assumption, `process_catalogue.md` for every job and
+See `assumptions_register.md` for every assumption, `process_catalogue.md` for every pipeline job and
 `data_dictionary.md` for every table and ID format, all in the project root.
